@@ -10,7 +10,6 @@ import { OrderModule } from './order/order.module';
 @Module({
   imports: [
     AppConfigModule,
-
     MongooseModule.forRootAsync({
       imports: [AppConfigModule],
       inject: [CONFIG],
