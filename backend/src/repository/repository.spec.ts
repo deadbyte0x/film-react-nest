@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getModelToken } from '@nestjs/mongoose';
-import { FILM_MODEL } from './film.schema';
+import { DataSource } from 'typeorm';
 import { Repository } from './repository';
 
 describe('Repository', () => {
@@ -8,10 +7,7 @@ describe('Repository', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        Repository,
-        { provide: getModelToken(FILM_MODEL), useValue: {} },
-      ],
+      providers: [Repository, { provide: DataSource, useValue: {} }],
     }).compile();
 
     provider = module.get<Repository>(Repository);
