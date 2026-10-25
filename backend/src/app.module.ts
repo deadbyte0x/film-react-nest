@@ -1,40 +1,37 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
 import { ServeStaticModule } from '@nestjs/serve-static';
-
-import { AppConfigModule, AppConfig, CONFIG } from './app.config.provider';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { join } from 'path';
+import { AppConfigModule, AppConfig, CONFIG } from './app.config.provider';
 import { FilmsModule } from './films/films.module';
 import { OrderModule } from './order/order.module';
+import { Film } from './repository/entities/film.entity';
+import { Schedule } from './repository/entities/schedule.entity';
 
 @Module({
   imports: [
-    AppConfigModule,
-    MongooseModule.forRootAsync({
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'),
+      serveRoot: '/',
+    }),
+    TypeOrmModule.forRootAsync({
       imports: [AppConfigModule],
       inject: [CONFIG],
       useFactory: (config: AppConfig) => {
-        if (config.database.driver !== 'mongodb') {
-          throw new Error(
-            `Unsupported database driver: ${config.database.driver}`,
-          );
-        }
+        const dbUrl = new URL(config.database.url);
 
-        return { uri: config.database.url };
+        return {
+          type: 'postgres' as const,
+          host: dbUrl.hostname,
+          port: Number(dbUrl.port || 5432),
+          database: dbUrl.pathname.slice(1),
+          username: config.database.username,
+          password: config.database.password,
+          entities: [Film, Schedule],
+          synchronize: false,
+        };
       },
     }),
-
-    ServeStaticModule.forRoot(
-      {
-        rootPath: join(process.cwd(), 'public'),
-        serveRoot: '/',
-      },
-      {
-        rootPath: join(process.cwd(), 'public', 'content', 'afisha'),
-        serveRoot: '/',
-      },
-    ),
-
     FilmsModule,
     OrderModule,
   ],
