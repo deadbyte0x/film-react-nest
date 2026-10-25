@@ -1,4 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import { Film } from './film.entity';
 
 @Entity('schedules')
 export class Schedule {
@@ -20,9 +28,18 @@ export class Schedule {
   @Column({ type: 'double precision' })
   price: number;
 
-  @Column({ type: 'text' })
-  taken: string;
+  @Column('text', {
+    array: true,
+    default: () => "'{}'::text[]",
+  })
+  taken: string[];
 
   @Column('uuid')
   filmId: string;
+
+  @ManyToOne(() => Film, (film) => film.schedule, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'filmId' })
+  film: Film;
 }

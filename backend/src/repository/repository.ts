@@ -1,3 +1,4 @@
+
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import {
@@ -10,38 +11,12 @@ import { Film } from './entities/film.entity';
 import { Schedule } from './entities/schedule.entity';
 import { FilmWithScheduleDto } from './film.schema';
 
-function parseArray(value: unknown): string[] {
-  if (value == null || value === '') {
-    return [];
-  }
-
-  if (Array.isArray(value)) {
-    return value.map(String);
-  }
-
-  if (typeof value !== 'string') {
-    return [];
-  }
-
-  try {
-    const parsed: unknown = JSON.parse(value);
-
-    if (Array.isArray(parsed)) {
-      return parsed.map(String);
-    }
-
-    return [String(parsed)];
-  } catch {
-    return [value];
-  }
-}
-
 function filmToDto(film: Film): FilmDto {
   return {
     id: film.id,
     rating: film.rating,
     director: film.director,
-    tags: parseArray(film.tags),
+    tags: film.tags ?? [],
     title: film.title,
     about: film.about,
     description: film.description,
@@ -61,7 +36,7 @@ function scheduleToDto(schedule: Schedule): ScheduleDto {
     rows: schedule.rows,
     seats: schedule.seats,
     price: schedule.price,
-    taken: parseArray(schedule.taken),
+    taken: schedule.taken ?? [],
   };
 }
 
@@ -79,13 +54,19 @@ export class Repository {
   }
 
   async getFilmById(id: string): Promise<FilmDto | null> {
-    const film = await this.dataSource.getRepository(Film).findOneBy({ id });
+    const film = await this.dataSource
+      .getRepository(Film)
+      .findOneBy({ id });
 
     return film ? filmToDto(film) : null;
   }
 
-  async getFilmSchedule(id: string): Promise<ScheduleResponseDto | null> {
-    const film = await this.dataSource.getRepository(Film).findOneBy({ id });
+  async getFilmSchedule(
+    id: string,
+  ): Promise<ScheduleResponseDto | null> {
+    const film = await this.dataSource
+      .getRepository(Film)
+      .findOneBy({ id });
 
     if (!film) {
       return null;
@@ -114,7 +95,7 @@ export class Repository {
           id: film.id,
           rating: film.rating,
           director: film.director,
-          tags: JSON.stringify(film.tags),
+          tags: film.tags ?? [],
           title: film.title,
           about: film.about,
           description: film.description,
@@ -131,7 +112,7 @@ export class Repository {
           rows: schedule.rows,
           seats: schedule.seats,
           price: schedule.price,
-          taken: JSON.stringify(schedule.taken),
+          taken: schedule.taken ?? [],
           filmId: film.id,
         })),
       );
@@ -175,15 +156,14 @@ export class Repository {
         return false;
       }
 
-      const taken = parseArray(schedule.taken);
+      const taken = schedule.taken ?? [];
       const takenSeats = new Set(taken);
 
       if (keys.some((key) => takenSeats.has(key))) {
         return false;
       }
 
-      schedule.taken = JSON.stringify([...taken, ...new Set(keys)]);
-
+      schedule.taken = [...takenSeats, ...keys];
       await scheduleRepository.save(schedule);
 
       return true;

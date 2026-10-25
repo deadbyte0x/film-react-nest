@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+} from 'typeorm';
+import { Schedule } from './schedule.entity';
 
 @Entity('films')
 export class Film {
@@ -11,8 +18,11 @@ export class Film {
   @Column({ type: 'varchar', length: 255 })
   director: string;
 
-  @Column({ type: 'text', nullable: true })
-  tags: string;
+  @Column('text', {
+    array: true,
+    default: () => "'{}'::text[]",
+  })
+  tags: string[];
 
   @Column({ type: 'text', nullable: true })
   image: string;
@@ -28,4 +38,7 @@ export class Film {
 
   @Column({ type: 'text', nullable: true })
   description: string;
+
+  @OneToMany(() => Schedule, (schedule) => schedule.film)
+  schedule: Schedule[];
 }
